@@ -6,9 +6,10 @@ edition = "2018"
 
 [dependencies]
 treexml = "0.7"
+wasm-bindgen = "0.2"
+host-core = {path = "../core"}
 
 [dev-dependencies]
-wasm-bindgen = "0.2"
 wasm-bindgen-test = "0.2.50"
 
 [dependencies.web-sys]
@@ -17,6 +18,8 @@ features = [
   'console',
   'Document',
   'Element',
+  'Event',
+  'EventTarget',
   'HtmlElement',
   'Node',
   'Window'

@@ -9,5 +9,6 @@ macro_rules! log {
 }
 
 pub mod dom;
+mod events;
 pub mod parse;
 pub mod render;

@@ -8,5 +8,4 @@ macro_rules! log {
     }
 }
 
-pub mod component;
 pub mod render;

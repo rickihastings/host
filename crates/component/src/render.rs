@@ -1,5 +1,5 @@
-use super::component::{Renderable};
 use host_vdom::{parse, render};
+use host_core::component::Renderable;
 
 use web_sys::{Document, Element, HtmlElement};
 
@@ -26,7 +26,7 @@ pub fn render_into_dom<T: Renderable<E>, E>(
         Ok(html) => {
             match parse::create_tree(&html) {
                 Some(tree) => {
-                    insert_node_into_dom(render::render(&document, &tree), &root);
+                    insert_node_into_dom(render::render(&document, &tree, &component), &root);
                 }
                 None => {
                     log!("Could not create tree");

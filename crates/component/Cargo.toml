@@ -5,6 +5,7 @@ authors = ["rickihastings"]
 edition = "2018"
 
 [dependencies]
+host-core = {path = "../core"}
 host-vdom = {path = "../vdom"}
 
 [dependencies.web-sys]

@@ -1,5 +1,8 @@
+use host_core::component::Renderable;
 use treexml::Element as VNode;
 use web_sys::{Document, Element};
+
+//use crate::events;
 
 fn append_child(element: &Element, child: &Element) {
     match element.append_child(child) {
@@ -11,7 +14,11 @@ fn append_child(element: &Element, child: &Element) {
     }
 }
 
-fn render_element(document: &Document, vnode: &VNode) -> Option<Element> {
+fn render_element<T: Renderable<E>, E>(
+    document: &Document,
+    vnode: &VNode,
+    component: &T,
+) -> Option<Element> {
     let element;
 
     match document.create_element(&vnode.name) {
@@ -22,18 +29,34 @@ fn render_element(document: &Document, vnode: &VNode) -> Option<Element> {
         }
     }
 
-    // Set attributes first
+    // Set attributes that aren't events first
     for (k, v) in vnode.attributes.iter() {
-        let _ = element.set_attribute(k, v);
+        if k.starts_with("on") {
+            // let handler = Closure::wrap(Box::new(move || {
+            //     web_sys::console::log_1(&"click".into());
+            // }) as Box<dyn FnMut()>);
+
+            // element
+            //     .add_event_listener_with_callback("click", handler.as_ref().unchecked_ref())
+            //     .unwrap();
+
+            // handler.forget();
+        } else {
+            let _ = element.set_attribute(k, v);
+        }
     }
 
     Some(element)
 }
 
-fn render_element_with_text(document: &Document, vnode: &VNode) -> Option<Element> {
+fn render_element_with_text<T: Renderable<E>, E>(
+    document: &Document,
+    vnode: &VNode,
+    component: &T,
+) -> Option<Element> {
     let element;
 
-    match render_element(document, vnode) {
+    match render_element(document, vnode, component) {
         Some(val) => element = val,
         _ => return None,
     }
@@ -47,17 +70,21 @@ fn render_element_with_text(document: &Document, vnode: &VNode) -> Option<Elemen
     }
 }
 
-fn render_element_with_children(document: &Document, vnode: &VNode) -> Option<Element> {
+fn render_element_with_children<T: Renderable<E>, E>(
+    document: &Document,
+    vnode: &VNode,
+    component: &T,
+) -> Option<Element> {
     let element;
 
-    match render_element(document, vnode) {
+    match render_element(document, vnode, component) {
         Some(val) => element = val,
         _ => return None,
     }
 
     // Set children
     for child in vnode.children.iter() {
-        match render(&document, &child) {
+        match render(document, &child, component) {
             Some(val) => append_child(&element, &val),
             None => {}
         };
@@ -66,14 +93,18 @@ fn render_element_with_children(document: &Document, vnode: &VNode) -> Option<El
     Some(element)
 }
 
-pub fn render(document: &Document, vnode: &VNode) -> Option<Element> {
+pub fn render<T: Renderable<E>, E>(
+    document: &Document,
+    vnode: &VNode,
+    component: &T,
+) -> Option<Element> {
     match &vnode.text {
-        Some(_) => return render_element_with_text(document, vnode),
+        Some(_) => return render_element_with_text(document, vnode, component),
         None => (),
     }
 
     if vnode.children.len() > 0 {
-        render_element_with_children(document, vnode)
+        render_element_with_children(document, vnode, component)
     } else {
         None
     }
