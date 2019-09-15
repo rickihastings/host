@@ -1,0 +1,14 @@
+[package]
+name = "host-component"
+version = "0.1.0"
+authors = ["rickihastings"]
+edition = "2018"
+
+[dependencies]
+host-vdom = {path = "../vdom"}
+
+[dependencies.web-sys]
+version = "0.3.4"
+features = [
+  'console'
+]
