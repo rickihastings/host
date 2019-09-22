@@ -1,70 +1,64 @@
 #[macro_use]
 extern crate horrorshow;
+#[macro_use]
+extern crate strum_macros;
 
 mod utils;
 
 use horrorshow::{Error, Template};
-use host_core::component::Renderable;
-use host_component::render;
-use host_vdom::dom;
+use host_component::{start, Component, Model};
 use wasm_bindgen::prelude::*;
+use web_sys::Event;
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
-// macro_rules! log {
-//     ( $( $t:tt )* ) => {
-//         web_sys::console::log_1(&format!( $( $t )* ).into());
-//     }
-// }
+macro_rules! log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global allocator.
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-#[wasm_bindgen]
-extern "C" {
-    fn alert(s: &str);
+static ROOT: RootView = RootView { name: "Ricki" };
+
+#[wasm_bindgen(start)]
+pub fn main() {
+    start("body", &ROOT)
 }
 
-#[wasm_bindgen]
-pub fn init() -> Result<(), JsValue> {
-    let (document, body) = dom::prepare();
-    let root = RootView::new("Ricki");
-
-    render::render_into_dom(root, &document, &body);
-
-    Ok(())
-}
-
+#[repr(u8)]
+#[derive(ToString, EnumString)]
 enum Msg {
-    Increment
+    Increment,
 }
 
-pub fn create_event<M>(message: M) -> &'static str {
-
-
-    ""
-}
-
+#[derive(Copy, Clone)]
 struct RootView {
     name: &'static str,
 }
 
-impl RootView {
-    fn new(name: &'static str) -> Self {
-        Self { name }
-    }
+impl Model for RootView {
+    type Message = Msg;
 
-    fn update(&self, message: Msg) {
-        web_sys::console::log_1(&"click".into());
+    fn update(&self, event: &Event, message: Msg) {
+        match message {
+            Msg::Increment => {
+                log!("{:#?}", event);
+
+                // self.name = "Roy"
+            }
+        }
     }
 }
 
-impl Renderable<Error> for RootView {
+impl Component<Error> for RootView {
     fn render(&self) -> Result<String, Error> {
         (html! {
             article {
-                header(class="post-header", onclick=create_event(Msg::Increment)) {
+                header(class="post-header", onclick=self.create_event(Msg::Increment)) {
                     p : self.name;
                 }
                 section(class="post-body") : "Body";

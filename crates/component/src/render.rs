@@ -1,9 +1,7 @@
-use host_vdom::{parse, render};
-use host_core::component::Renderable;
+use crate::{dom, parse, Component, Model};
+use web_sys::{Document, Element};
 
-use web_sys::{Document, Element, HtmlElement};
-
-fn insert_node_into_dom(node: Option<Element>, root: &HtmlElement) {
+fn insert_node_into_dom(node: Option<Element>, root: &Element) {
     match node {
         Some(val) => {
             match root.append_child(&val) {
@@ -17,16 +15,21 @@ fn insert_node_into_dom(node: Option<Element>, root: &HtmlElement) {
     }
 }
 
-pub fn render_into_dom<T: Renderable<E>, E>(
-    component: T,
+pub fn render_into_dom<T, E>(
+    component: &'static T,
     document: &Document,
-    root: &HtmlElement
-) {
+    root: &Element,
+)
+where
+    T: Component<E> + Model + 'static
+{
     match component.render() {
         Ok(html) => {
             match parse::create_tree(&html) {
                 Some(tree) => {
-                    insert_node_into_dom(render::render(&document, &tree, &component), &root);
+                    let renderer = dom::TreeRenderer::new(&document, &tree, component);
+
+                    insert_node_into_dom(renderer.render(), &root);
                 }
                 None => {
                     log!("Could not create tree");

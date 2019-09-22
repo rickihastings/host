@@ -1,5 +1,10 @@
 extern crate web_sys;
 
+use std::str::FromStr;
+use web_sys::Event;
+
+pub static EVENT_DATA_ATTRIBUTE: &str = "data-m";
+
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 #[macro_export]
 macro_rules! log {
@@ -8,4 +13,44 @@ macro_rules! log {
     }
 }
 
+/// An interface for the data layer behind a Component
+pub trait Model: Sized + 'static {
+    /// The message type which should be used to update the view
+    type Message: 'static + std::string::ToString + FromStr;
+
+    /// Called whenever an update is received from any source
+    fn update(&self, event: &Event, message: Self::Message);
+
+    /// Used to bind events to messages
+    fn create_event(&self, message: Self::Message) -> String {
+        message.to_string()
+    }
+
+    /// Used to cast a String to a Self::Message
+    fn cast_to_message(&self, message: &str) -> Option<Self::Message> {
+        match Self::Message::from_str(message) {
+            Ok(value) => Some(value),
+            Err(_) => None,
+        }
+    }
+}
+
+/// An interface for a React-style Component
+pub trait Component<E>: Sized + 'static {
+    /// What returns the HTML, it's not essential to use horrorshow here, you can
+    /// render with thatever you like, as long as it returns a Result<String, AnError>
+    fn render(&self) -> Result<String, E>;
+}
+
+pub fn start<T, E>(element: &str, component: &'static T)
+where
+    T: Component<E> + Model + 'static,
+{
+    application::App::new(component).mount(element);
+}
+
+pub mod application;
+pub mod dom;
+pub mod events;
+pub mod parse;
 pub mod render;

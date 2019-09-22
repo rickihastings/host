@@ -13,8 +13,8 @@ default = ["console_error_panic_hook"]
 [dependencies]
 wasm-bindgen = "0.2"
 horrorshow = "0.7.0"
-host-core = {path = "./crates/core"}
-host-vdom = {path = "./crates/vdom"}
+strum = "0.16.0"
+strum_macros = "0.16.0"
 host-component = {path = "./crates/component"}
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
