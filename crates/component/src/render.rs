@@ -15,13 +15,9 @@ fn insert_node_into_dom(node: Option<Element>, root: &Element) {
     }
 }
 
-pub fn render_into_dom<T, E>(
-    component: &'static T,
-    document: &Document,
-    root: &Element,
-)
+pub fn render_into_dom<T, E>(component: T, document: &Document, root: &Element)
 where
-    T: Component<E> + Model + 'static
+    T: Component<E> + Model,
 {
     match component.render() {
         Ok(html) => {

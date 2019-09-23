@@ -1,6 +1,7 @@
 extern crate web_sys;
 
 use std::str::FromStr;
+use std::string::ToString;
 use web_sys::Event;
 
 pub static EVENT_DATA_ATTRIBUTE: &str = "data-m";
@@ -14,9 +15,9 @@ macro_rules! log {
 }
 
 /// An interface for the data layer behind a Component
-pub trait Model: Sized + 'static {
+pub trait Model: Sized + Copy + 'static {
     /// The message type which should be used to update the view
-    type Message: 'static + std::string::ToString + FromStr;
+    type Message: 'static + ToString + FromStr;
 
     /// Called whenever an update is received from any source
     fn update(&self, event: &Event, message: Self::Message);
@@ -36,15 +37,20 @@ pub trait Model: Sized + 'static {
 }
 
 /// An interface for a React-style Component
-pub trait Component<E>: Sized + 'static {
+pub trait Component<E>: Sized + Model + Copy {
     /// What returns the HTML, it's not essential to use horrorshow here, you can
     /// render with thatever you like, as long as it returns a Result<String, AnError>
     fn render(&self) -> Result<String, E>;
+
+    fn re_render(&self) {
+        // let (document, root) = dom::prepare("body");
+        // render::render_into_dom(self, &document, &root);
+    }
 }
 
-pub fn start<T, E>(element: &str, component: &'static T)
+pub fn start<T, E>(element: &str, component: T)
 where
-    T: Component<E> + Model + 'static,
+    T: Component<E> + Model,
 {
     application::App::new(component).mount(element);
 }

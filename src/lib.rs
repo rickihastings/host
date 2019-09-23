@@ -26,7 +26,7 @@ static ROOT: RootView = RootView { name: "Ricki" };
 
 #[wasm_bindgen(start)]
 pub fn main() {
-    start("body", &ROOT)
+    start("body", ROOT);
 }
 
 #[repr(u8)]
@@ -34,6 +34,10 @@ pub fn main() {
 enum Msg {
     Increment,
 }
+
+// todo
+unsafe impl Send for RootView {}
+unsafe impl Sync for RootView {}
 
 #[derive(Copy, Clone)]
 struct RootView {
@@ -48,9 +52,11 @@ impl Model for RootView {
             Msg::Increment => {
                 log!("{:#?}", event);
 
-                // self.name = "Roy"
+                // self.name = "Roy";
             }
         }
+
+        self.re_render();
     }
 }
 
