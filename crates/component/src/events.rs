@@ -3,25 +3,21 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{Element, Event};
 
-pub fn create_event_handler<T>(name: &str, element: &Element, component: T)
+pub fn create_event_handler<'a, T>(name: &str, element: &Element, component: T)
 where
     T: Model,
 {
-    match map_js_event_to_event(name) {
-        Some(real_event) => {
-            let boxed_callback = Box::new(move |event| match get_message_from_event(&event) {
-                Some(message) => match component.cast_to_message(&message) {
-                    Some(casted_message) => {
-                        component.update(&event, casted_message);
-                    }
-                    None => {}
-                },
-                None => {}
-            });
+    if let Some(real_event) = map_js_event_to_event(name) {
+        let mut cloned = component.clone();
+        let boxed_callback = Box::new(move |event| {
+            if let Some(message) = get_message_from_event(&event) {
+                if let Some(casted_message) = cloned.cast_to_message(&message) {
+                    cloned.update(&event, casted_message);
+                }
+            }
+        });
 
-            add_event_listener(real_event, element, boxed_callback);
-        }
-        None => {}
+        add_event_listener(real_event, element, boxed_callback);
     }
 }
 
@@ -31,8 +27,11 @@ where
 {
     let closure = Closure::wrap(Box::new(handler) as Box<dyn FnMut(_)>);
 
-    element.add_event_listener_with_callback(event_name, closure.as_ref().unchecked_ref());
-    closure.forget();
+    if let Ok(_) =
+        element.add_event_listener_with_callback(event_name, closure.as_ref().unchecked_ref())
+    {
+        closure.forget();
+    };
 }
 
 fn get_message_from_event<'a>(event: &'a Event) -> Option<String> {

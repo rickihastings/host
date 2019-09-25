@@ -1,27 +1,31 @@
 use crate::{dom, render, Component, Model};
 use std::marker::PhantomData;
 
-pub struct App<T, E>
+pub struct App<'a, T, E>
 where
     T: Component<E> + Model,
 {
     component: T,
+    root: &'a str,
     __phantom: PhantomData<E>,
 }
 
-impl<T, E> App<T, E>
+impl<'a, T, E> App<'a, T, E>
 where
     T: Component<E> + Model,
 {
-    pub fn new(component: T) -> Self {
+    pub fn new(root: &'a str) -> Self {
+        let component = T::new();
+
         App {
-            component: component,
+            component,
+            root,
             __phantom: PhantomData,
         }
     }
 
-    pub fn mount(&self, element: &str) {
-        let (document, root) = dom::prepare(element);
+    pub fn mount(&self) {
+        let (document, root) = dom::prepare(self.root);
 
         render::render_into_dom(self.component, &document, &root);
     }

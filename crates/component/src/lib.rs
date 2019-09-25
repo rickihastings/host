@@ -19,8 +19,11 @@ pub trait Model: Sized + Copy + 'static {
     /// The message type which should be used to update the view
     type Message: 'static + ToString + FromStr;
 
+    /// Constructor for the model
+    fn new() -> Self;
+
     /// Called whenever an update is received from any source
-    fn update(&self, event: &Event, message: Self::Message);
+    fn update(&mut self, event: &Event, message: Self::Message);
 
     /// Used to bind events to messages
     fn create_event(&self, message: Self::Message) -> String {
@@ -37,22 +40,22 @@ pub trait Model: Sized + Copy + 'static {
 }
 
 /// An interface for a React-style Component
-pub trait Component<E>: Sized + Model + Copy {
+pub trait Component<E>: Sized + Copy + Model {
     /// What returns the HTML, it's not essential to use horrorshow here, you can
     /// render with thatever you like, as long as it returns a Result<String, AnError>
     fn render(&self) -> Result<String, E>;
 
+    /// Shouldn't be called externally, this is used to internally rerender the app
     fn re_render(&self) {
-        // let (document, root) = dom::prepare("body");
-        // render::render_into_dom(self, &document, &root);
+        
     }
 }
 
-pub fn start<T, E>(element: &str, component: T)
+pub fn start<T, E>(root: &str)
 where
     T: Component<E> + Model,
 {
-    application::App::new(component).mount(element);
+    application::App::<T, E>::new(root).mount();
 }
 
 pub mod application;

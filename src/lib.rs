@@ -5,6 +5,7 @@ extern crate strum_macros;
 
 mod utils;
 
+// use std::cell::Cell;
 use horrorshow::{Error, Template};
 use host_component::{start, Component, Model};
 use wasm_bindgen::prelude::*;
@@ -22,11 +23,9 @@ macro_rules! log {
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-static ROOT: RootView = RootView { name: "Ricki" };
-
 #[wasm_bindgen(start)]
 pub fn main() {
-    start("body", ROOT);
+    start::<RootView, Error>("body");
 }
 
 #[repr(u8)]
@@ -47,12 +46,16 @@ struct RootView {
 impl Model for RootView {
     type Message = Msg;
 
-    fn update(&self, event: &Event, message: Msg) {
+    fn new() -> Self {
+        Self { name: "Ricki" }
+    }
+
+    fn update(&mut self, event: &Event, message: Msg) {
         match message {
             Msg::Increment => {
                 log!("{:#?}", event);
 
-                // self.name = "Roy";
+                self.name = "Rick";
             }
         }
 
