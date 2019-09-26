@@ -1,18 +1,16 @@
 use crate::{dom, render, Component, Model};
-use std::marker::PhantomData;
 
-pub struct App<'a, T, E>
+pub struct App<'a, T>
 where
-    T: Component<E> + Model,
+    T: Component + Model,
 {
     component: T,
     root: &'a str,
-    __phantom: PhantomData<E>,
 }
 
-impl<'a, T, E> App<'a, T, E>
+impl<'a, T> App<'a, T>
 where
-    T: Component<E> + Model,
+    T: Component + Model,
 {
     pub fn new(root: &'a str) -> Self {
         let component = T::new();
@@ -20,7 +18,6 @@ where
         App {
             component,
             root,
-            __phantom: PhantomData,
         }
     }
 

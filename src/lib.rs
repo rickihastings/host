@@ -5,8 +5,7 @@ extern crate strum_macros;
 
 mod utils;
 
-// use std::cell::Cell;
-use horrorshow::{Error, Template};
+use horrorshow::Template;
 use host_component::{start, Component, Model};
 use wasm_bindgen::prelude::*;
 use web_sys::Event;
@@ -25,7 +24,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen(start)]
 pub fn main() {
-    start::<RootView, Error>("body");
+    start::<RootView>("body");
 }
 
 #[repr(u8)]
@@ -61,8 +60,8 @@ impl Model for RootView {
     }
 }
 
-impl Component<Error> for RootView {
-    fn render(&self) -> Result<String, Error> {
+impl Component for RootView {
+    fn render(&self) -> String {
         (html! {
             article {
                 header(class="post-header", onclick=self.create_event(Msg::Increment)) {
@@ -72,5 +71,6 @@ impl Component<Error> for RootView {
             }
         })
         .into_string()
+        .unwrap()
     }
 }

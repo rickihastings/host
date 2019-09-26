@@ -58,17 +58,17 @@ pub trait Model: Sized + Copy + EventEmitter + 'static {
 }
 
 /// An interface for a React-style Component
-pub trait Component<E>: Sized + Copy + Model {
+pub trait Component: Sized + Copy + Model {
     /// What returns the HTML, it's not essential to use horrorshow here, you can
     /// render with thatever you like, as long as it returns a Result<String, AnError>
-    fn render(&self) -> Result<String, E>;
+    fn render(&self) -> String;
 }
 
-pub fn start<T, E>(root: &str)
+pub fn start<T>(root: &str)
 where
-    T: Component<E> + Model,
+    T: Component + Model,
 {
-    application::App::<T, E>::new(root).mount();
+    application::App::<T>::new(root).mount();
 }
 
 pub mod application;

@@ -15,25 +15,20 @@ fn insert_node_into_dom(node: Option<Element>, root: &Element) {
     }
 }
 
-pub fn render_into_dom<T, E>(component: T, document: &Document, root: &Element)
+pub fn render_into_dom<T>(component: T, document: &Document, root: &Element)
 where
-    T: Component<E> + Model,
+    T: Component + Model,
 {
-    match component.render() {
-        Ok(html) => {
-            match parse::create_tree(&html) {
-                Some(tree) => {
-                    let renderer = dom::TreeRenderer::new(&document, &tree, component);
+    let html = component.render();
 
-                    insert_node_into_dom(renderer.render(), &root);
-                }
-                None => {
-                    log!("Could not create tree");
-                }
-            };
+    match parse::create_tree(&html) {
+        Some(tree) => {
+            let renderer = dom::TreeRenderer::new(&document, &tree, component);
+
+            insert_node_into_dom(renderer.render(), &root);
         }
-        Err(_) => {
-            log!("Could not create vDOM node");
+        None => {
+            log!("Could not create tree");
         }
     };
 }

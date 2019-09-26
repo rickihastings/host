@@ -1,25 +1,22 @@
 use crate::{events, Component, Model};
-use std::marker::PhantomData;
 use treexml::Element as VNode;
 use web_sys::{Document, Element};
 
-pub struct TreeRenderer<'a, T, E>
+pub struct TreeRenderer<'a, T>
 where
-    T: Component<E> + Model,
+    T: Component + Model,
 {
-    __phantom: PhantomData<E>,
     document: &'a Document,
     vnode: &'a VNode,
     component: T,
 }
 
-impl<'a, T, E> TreeRenderer<'a, T, E>
+impl<'a, T> TreeRenderer<'a, T>
 where
-    T: Component<E> + Model,
+    T: Component + Model,
 {
     pub fn new(document: &'a Document, vnode: &'a VNode, component: T) -> Self {
         Self {
-            __phantom: PhantomData,
             document,
             vnode,
             component,
