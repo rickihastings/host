@@ -12,7 +12,7 @@ where
         let boxed_callback = Box::new(move |event| {
             if let Some(message) = get_message_from_event(&event) {
                 if let Some(casted_message) = cloned.cast_to_message(&message) {
-                    cloned.update(&event, casted_message);
+                    cloned.trigger_update(&event, casted_message);
                 }
             }
         });

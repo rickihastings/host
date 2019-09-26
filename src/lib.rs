@@ -58,8 +58,6 @@ impl Model for RootView {
                 self.name = "Rick";
             }
         }
-
-        self.re_render();
     }
 }
 
