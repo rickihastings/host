@@ -1,8 +1,6 @@
-use std::sync::{Arc, Mutex, Once, ONCE_INIT};
-use std::time::Duration;
-use std::{mem, thread};
+use std::sync::{Arc, Mutex, Once};
+use std::mem;
 use std::collections::HashMap;
-use web_sys::Event;
 
 #[derive(Clone)]
 pub struct GlobalState {
@@ -14,7 +12,7 @@ pub struct GlobalState {
 pub fn get() -> GlobalState {
     // Initialize it to a null value
     static mut SINGLETON: *const GlobalState = 0 as *const GlobalState;
-    static ONCE: Once = ONCE_INIT;
+    static ONCE: Once = Once::new();
 
     unsafe {
         ONCE.call_once(|| {

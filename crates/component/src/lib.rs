@@ -1,7 +1,3 @@
-#[macro_use]
-extern crate enum_primitive_derive;
-extern crate num_traits;
-
 extern crate web_sys;
 
 use num_traits::{FromPrimitive, ToPrimitive};
@@ -71,10 +67,8 @@ pub trait Component: Sized + Copy + Renderable {
     /// Constructor for the model with props
     fn new(props: Self::Props) -> Self;
 
-    fn emit_event(self, event: &Event, message: i32) {
-        if let Some(message_enum) = Self::Message::from_i32(message) {
-            self.update(event, message_enum);
-        }
+    fn cast_to_message(self, message: i32) -> Option<Self::Message> {
+        Self::Message::from_i32(message)
     }
 
     /// Update
