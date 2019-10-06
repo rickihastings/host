@@ -52,16 +52,27 @@ impl Component for RootView {
     type Props = RootViewProps;
 
     fn new(props: Self::Props) -> Self {
+        log!("New comp");
+
         Self { name: props.name }
     }
 
-    fn update(mut self, event: &Event, message: Message) {
-        log!("Update")
+    fn update(mut self, event: &Event, message: Message) -> Self {
+        match message {
+            Message::Add => {
+                log!("Update! {:?}", event);
+                self.name = "Rick";
+
+                self
+            }
+        }
     }
 }
 
 impl Renderable for RootView {
     fn render(self) -> String {
+        log!("Updated: {}", self.name);
+
         html! {
             <article>
                 <header class={"title"} onclick={self.create_event(&Message::Add)}>

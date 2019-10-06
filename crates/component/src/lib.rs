@@ -4,8 +4,6 @@ use num_traits::{FromPrimitive, ToPrimitive};
 use render::Renderable;
 use web_sys::Event;
 
-pub static EVENT_DATA_ATTRIBUTE: &str = "data-m";
-
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 #[macro_export]
 macro_rules! log {
@@ -14,71 +12,33 @@ macro_rules! log {
     }
 }
 
-// pub trait Renderer {
-//     fn on_update(&mut self);
-// }
-
-// impl<T> Renderer for T
-// where
-//     T: Component,
-// {
-//     fn on_update(&mut self) {
-//         let (document, root) = dom::prepare("body");
-
-//         render::render_into_dom(*self, &document, &root);
-//     }
-// }
-
-/// An interface for the data layer behind a Component
-// pub trait Model: Sized + Copy + Renderer + 'static {
-//     /// The message type which should be used to update the view
-//     type Message: 'static + ToString + FromStr;
-
-//     /// Constructor for the model
-//     fn new() -> Self;
-
-//     fn trigger_update(&mut self, event: &Event, message: Self::Message) {
-//         self.update(event, message);
-//         self.on_update();
-//     }
-
-//     /// Called whenever an update is received from any source
-//     fn update(&mut self, event: &Event, message: Self::Message);
-
-//     /// Used to bind events to messages
-//     fn create_event(&self, message: Self::Message) -> String {
-//         message.to_string()
-//     }
-
-//     /// Used to cast a String to a Self::Message
-//     fn cast_to_message(&self, message: &str) -> Option<Self::Message> {
-//         match Self::Message::from_str(message) {
-//             Ok(value) => Some(value),
-//             Err(_) => None,
-//         }
-//     }
-// }
-
 /// An interface for a React-style Component
-pub trait Component: Sized + Copy + Renderable {
+pub trait Component: Sized + 'static + Copy + Renderable {
     type Message: 'static + FromPrimitive + ToPrimitive;
     type Props;
 
     /// Constructor for the model with props
     fn new(props: Self::Props) -> Self;
 
-    fn cast_to_message(self, message: i32) -> Option<Self::Message> {
-        Self::Message::from_i32(message)
+    fn emit_update(mut self, event: &Event, message: i32) {
+        if let Some(casted_message) = Self::Message::from_i32(message) {
+            // todo - might be better to mutate
+            let component = self.update(event, casted_message);
+            let (document, root) = dom::prepare("body");
+
+            renderer::render_into_dom(component, &document, &root);
+        }
     }
 
     /// Update
-    fn update(self, event: &Event, message: Self::Message);
+    fn update(mut self, event: &Event, message: Self::Message) -> Self;
 
     /// Used to bind events to components
     fn create_event(self, message: &Self::Message) -> &'static str {
         let global_state = state::get();
         if let Ok(mut event_map) = global_state.events.lock() {
             if let Some(message_int) = message.to_i32() {
+                // todo
                 event_map.insert(String::from("1"), message_int);
             }
         }

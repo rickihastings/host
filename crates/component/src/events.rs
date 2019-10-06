@@ -14,11 +14,7 @@ where
             if let Some(message) = event_map.get("1").map(|x| *x) {
                 let mut cloned = component.clone();
                 let boxed_callback = Box::new(move |event| {
-                    if let Some(casted_message) = cloned.cast_to_message(message) {
-                        cloned.update(&event, casted_message);
-                    }
-
-                    log!("Test");
+                    cloned.emit_update(&event, message);
                 });
 
                 add_event_listener(real_event, element, boxed_callback)
