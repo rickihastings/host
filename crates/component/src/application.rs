@@ -1,8 +1,8 @@
-use crate::{dom, render, Component, Model};
+use crate::{dom, renderer, Component};
 
 pub struct App<'a, T>
 where
-    T: Component + Model,
+    T: Component,
 {
     component: T,
     root: &'a str,
@@ -10,20 +10,17 @@ where
 
 impl<'a, T> App<'a, T>
 where
-    T: Component + Model,
+    T: Component,
 {
-    pub fn new(root: &'a str) -> Self {
-        let component = T::new();
+    pub fn new(root: &'a str, props: T::Props) -> Self {
+        let component = T::new(props);
 
-        App {
-            component,
-            root,
-        }
+        App { component, root }
     }
 
     pub fn mount(&self) {
         let (document, root) = dom::prepare(self.root);
 
-        render::render_into_dom(self.component, &document, &root);
+        renderer::render_into_dom(self.component, &document, &root);
     }
 }

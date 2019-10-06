@@ -1,10 +1,10 @@
-use crate::{events, Component, Model};
+use crate::{events, Component};
 use treexml::Element as VNode;
 use web_sys::{Document, Element};
 
 pub struct TreeRenderer<'a, T>
 where
-    T: Component + Model,
+    T: Component,
 {
     document: &'a Document,
     vnode: &'a VNode,
@@ -13,7 +13,7 @@ where
 
 impl<'a, T> TreeRenderer<'a, T>
 where
-    T: Component + Model,
+    T: Component,
 {
     pub fn new(document: &'a Document, vnode: &'a VNode, component: T) -> Self {
         Self {
@@ -37,7 +37,6 @@ where
         // Set attributes that aren't events first
         for (k, v) in self.vnode.attributes.iter() {
             if k.starts_with("on") {
-                let _ = element.set_attribute(crate::EVENT_DATA_ATTRIBUTE, v);
                 events::create_event_handler(k, &element, self.component);
             } else {
                 let _ = element.set_attribute(k, v);

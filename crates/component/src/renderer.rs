@@ -1,4 +1,4 @@
-use crate::{dom, parse, Component, Model};
+use crate::{dom, parse, Component};
 use web_sys::{Document, Element};
 
 fn insert_node_into_dom(node: Option<Element>, root: &Element) {
@@ -17,7 +17,7 @@ fn insert_node_into_dom(node: Option<Element>, root: &Element) {
 
 pub fn render_into_dom<T>(component: T, document: &Document, root: &Element)
 where
-    T: Component + Model,
+    T: Component,
 {
     let html = component.render();
 
