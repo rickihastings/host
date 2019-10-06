@@ -61,7 +61,7 @@ macro_rules! log {
 
 /// An interface for a React-style Component
 pub trait Component: Sized + Copy + Renderable {
-    type Message: FromPrimitive + ToPrimitive;
+    type Message: 'static + FromPrimitive + ToPrimitive;
     type Props;
 
     /// Constructor for the model with props
