@@ -16,11 +16,14 @@ num-traits = "^0.1"
 version = "0.3.4"
 features = [
   'console',
+  'Attr',
   'Document',
   'Element',
   'Event',
   'EventTarget',
+  'HtmlCollection',
   'HtmlElement',
+  'NamedNodeMap',
   'Node',
   'Window'
 ]

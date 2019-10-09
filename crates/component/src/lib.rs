@@ -24,9 +24,9 @@ pub trait Component: Sized + 'static + Copy + Renderable {
         if let Some(casted_message) = Self::Message::from_i32(message) {
             // todo - might be better to mutate
             let component = self.update(event, casted_message);
-            let (document, root) = dom::prepare("body");
+            let (document, root) = dom::prepare("body > article");
 
-            renderer::render_into_dom(component, &document, &root);
+            renderer::render_into_dom(component, &document, &root, false);
         }
     }
 
@@ -55,6 +55,7 @@ where
 }
 
 pub mod application;
+pub mod diff;
 pub mod dom;
 pub mod events;
 pub mod parse;

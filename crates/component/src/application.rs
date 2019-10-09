@@ -21,6 +21,6 @@ where
     pub fn mount(&self) {
         let (document, root) = dom::prepare(self.root);
 
-        renderer::render_into_dom(self.component, &document, &root);
+        renderer::render_into_dom(self.component, &document, &root, true);
     }
 }

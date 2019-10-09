@@ -1,4 +1,4 @@
-use crate::{dom, parse, Component};
+use crate::{dom, parse, diff, Component};
 use web_sys::{Document, Element};
 
 fn insert_node_into_dom(node: Option<Element>, root: &Element) {
@@ -15,7 +15,20 @@ fn insert_node_into_dom(node: Option<Element>, root: &Element) {
     }
 }
 
-pub fn render_into_dom<T>(component: T, document: &Document, root: &Element)
+fn update_node_into_dom(node: Option<Element>, root: &Element) {
+    match node {
+        Some(val) => {
+            let mut patch = diff::diff_nodes(root, &val);
+
+            patch(root);
+        }
+        None => {
+            log!("Could not render into root: {:#?}", root);
+        }
+    }
+}
+
+pub fn render_into_dom<T>(component: T, document: &Document, root: &Element, initial: bool)
 where
     T: Component,
 {
@@ -25,10 +38,16 @@ where
         Some(tree) => {
             let renderer = dom::TreeRenderer::new(&document, &tree, component);
 
-            insert_node_into_dom(renderer.render(), &root);
+            if initial {
+                insert_node_into_dom(renderer.render(), &root);
+            } else {
+                update_node_into_dom(renderer.render(), &root);
+            }
         }
         None => {
             log!("Could not create tree");
         }
     };
 }
+
+
