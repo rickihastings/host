@@ -1,29 +1,7 @@
 use std::cmp::max;
-use web_sys::{Element, Node, NodeList, NamedNodeMap, HtmlCollection};
+use web_sys::{Element, NamedNodeMap, HtmlCollection};
 
-type UnBoxedPatcher = dyn FnMut(&Element) -> &Element;
 type Patcher = Box<dyn FnMut(&Element) -> &Element>;
-
-struct Zipped {
-    patcher: Patcher,
-    children: Node,
-}
-
-fn zip(xs: Vec<UnBoxedPatcher>, ys: NodeList) -> Vec<Zipped> {
-    let mut zipped: Vec<Zipped> = Vec::new();
-    let ys_len = ys.length() as usize;
-
-    for i in 0..max(xs.len(), ys_len) {
-        if let Some(child) = ys.get(i as u32) {
-            zipped.push(Zipped {
-                patcher: Box::new(xs[i]),
-                children: child
-            })
-        }
-    }
-
-    zipped
-}
 
 fn diff_attributes(old_attributes: &NamedNodeMap, new_attributes: &NamedNodeMap) -> Patcher {
     let mut patches: Vec<Patcher> = Vec::new();
@@ -66,33 +44,58 @@ fn diff_attributes(old_attributes: &NamedNodeMap, new_attributes: &NamedNodeMap)
 }
 
 fn diff_children(old_children: &HtmlCollection, new_children: &HtmlCollection) -> Patcher {
-    let mut child_patches: Vec<UnBoxedPatcher> = Vec::new();
+    let mut child_patches: Vec<Patcher> = Vec::new();
 
+    // Child patches
     for key in 0..old_children.length() {
         if let Some(old_child) = old_children.get_with_index(key) {
             // Need to diff old child with new child at the specified index
             if let Some(new_child) = new_children.get_with_index(key) {
-                child_patches.push(move |node: &Element| {
-                    diff_nodes(&old_child, &new_child);
+                child_patches.push(Box::new(move |node: &Element| {
+                    diff_nodes(&old_child, &new_child)(node);
 
                     node
-                });
+                }));
             }
         }
     }
 
-    Box::new(move |node: &Element| {
+    let mut additional_patches: Vec<Patcher> = Vec::new();
+    
+    // Additional patches
+    for key in old_children.length()..new_children.length() {
+        if let Some(new_child) = new_children.get_with_index(key) {
+            additional_patches.push(Box::new(move |node: &Element| {
+                node.append_with_node_1(&new_child);
 
+                node
+            }))
+        }
+    }
 
-        node
+    Box::new(move |parent: &Element| {
+        let child_nodes = parent.children();
+        let child_nodes_length = child_nodes.length() as usize;
+
+        for index in 0..max(child_patches.len(), child_nodes_length) {
+            if let Some(child) = child_nodes.item(index as u32) {
+                if let Some(patch) = child_patches.get_mut(index) {
+                    patch(&child);
+                }
+            }
+        }
+
+        for index in 0..additional_patches.len() {
+            if let Some(patch) = additional_patches.get_mut(index) {
+                patch(parent);
+            }
+        }
+
+        parent
     })
 }
 
 pub fn diff_nodes(old_node: &Element, new_node: &Element) -> Patcher {
-    // todo remove node
-
-    // todo strings
-
     if old_node.tag_name() != new_node.tag_name() {
         // todo patch node
         Box::new(move |node: &Element| {
@@ -109,4 +112,8 @@ pub fn diff_nodes(old_node: &Element, new_node: &Element) -> Patcher {
             node
         })
     }
+}
+
+pub fn remove_node(node: &Element) {
+    node.remove();
 }
