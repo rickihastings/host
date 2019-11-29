@@ -98,10 +98,16 @@ where
     }
 }
 
-pub fn prepare(selector: &str) -> (Document, Element) {
+pub fn get_document() -> Document {
     // Use `web_sys`'s global `window` function to get a handle on the global window object.
     let window = web_sys::window().expect("no global `window` exists");
     let document = window.document().expect("should have a document on window");
+
+    document
+}
+
+pub fn prepare(selector: &str) -> (Document, Element) {
+    let document = get_document();
     let element = document
         .query_selector(selector)
         .expect("cannot find element in document")

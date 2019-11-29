@@ -95,23 +95,52 @@ fn diff_children(old_children: &HtmlCollection, new_children: &HtmlCollection) -
     })
 }
 
+pub fn diff_content(old_node: &Element, new_node: &Element) -> Patcher {
+    // If the new node doesn't have any children, we know it's text so we can compare it.
+    if new_node.children().length() == 0 {
+        let old_text = old_node.text_content().unwrap();
+        let new_text = new_node.text_content().unwrap();
+
+        if old_text != new_text {
+            return Box::new(move |node: &Element| {
+                node.set_inner_html(&new_text);
+
+                node
+            });
+        }
+    }
+
+    Box::new(move |node: &Element| {
+        node
+    })
+}
+
 pub fn diff_nodes(old_node: &Element, new_node: &Element) -> Patcher {
     if old_node.tag_name() != new_node.tag_name() {
-        // todo patch node
-        Box::new(move |node: &Element| {
-            node
-        })
+        if let Ok(new_n) = new_node.clone_node() {
+            return Box::new(move |node: &Element| {
+                node.replace_child(&node, &new_n);
+
+                node
+            });
+        }
     } else {
         let mut patch_attributes = diff_attributes(&old_node.attributes(), &new_node.attributes());
         let mut patch_children = diff_children(&old_node.children(), &new_node.children());
+        let mut patch_content = diff_content(&old_node, &new_node);
 
-        Box::new(move |node: &Element| {
+        return Box::new(move |node: &Element| {
             patch_attributes(node);
             patch_children(node);
+            patch_content(node);
 
             node
-        })
+        });
     }
+
+    Box::new(move |node: &Element| {
+        node
+    })
 }
 
 pub fn remove_node(node: &Element) {

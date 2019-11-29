@@ -14,6 +14,7 @@ fn insert_node_into_dom(node: Option<Element>, root: &Element) {
         }
     }
 }
+
 fn update_node_into_dom(node: Option<Element>, root: &Element) {
     match node {
         Some(val) => {
