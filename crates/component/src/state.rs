@@ -1,31 +1,26 @@
-use std::sync::{Arc, Mutex, Once};
-use std::mem;
-use std::collections::HashMap;
+use std::cell::RefCell;
+use std::rc::Rc;
 
-#[derive(Clone)]
-pub struct GlobalState {
-    // Since we will be used in many threads, we need to protect
-    // concurrent access
-    pub events: Arc<Mutex<HashMap<String, i32>>>,
+pub type RcState = Rc<RefCell<State>>;
+
+pub struct State {
+	listeners: Vec<Box<Fn() -> ()>>
 }
 
-pub fn get() -> GlobalState {
-    // Initialize it to a null value
-    static mut SINGLETON: *const GlobalState = 0 as *const GlobalState;
-    static ONCE: Once = Once::new();
+impl State {
+    pub fn new() -> Self {
+        Self {
+			listeners: vec![]
+		}
+	}
 
-    unsafe {
-        ONCE.call_once(|| {
-            // Make it
-            let singleton = GlobalState {
-                events: Arc::new(Mutex::new(HashMap::new())),
-            };
-
-            // Put it in the heap so it can outlive this call
-            SINGLETON = mem::transmute(Box::new(singleton));
-        });
-
-        // Now we give out a copy of the data that is safe to use concurrently.
-        (*SINGLETON).clone()
-    }
+	pub fn subscribe(&mut self, callback: Box<Fn() -> ()>) {
+        self.listeners.push(callback)
+	}
+	
+	pub fn update(&mut self) {
+		for callback in self.listeners.iter() {
+            callback();
+        }
+	}
 }

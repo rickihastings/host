@@ -1,15 +1,12 @@
 #![feature(proc_macro_hygiene)]
 
-#[macro_use]
-extern crate enum_primitive_derive;
-extern crate num_traits;
-
 mod utils;
 
-use render::{html, Renderable};
-use host_component::{start, Component};
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use wasm_bindgen::prelude::*;
-use web_sys::Event;
+use host_component::{html, Application, Component, VirtualNode, IterableNodes, topo, use_state, State, RcState};
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
@@ -23,70 +20,60 @@ macro_rules! log {
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-#[wasm_bindgen(start)]
-pub fn main() {
-    start::<RootView>("body", RootViewProps { name: "ricki", color: "red" });
+#[wasm_bindgen]
+struct Client {
+    state: RcState,
+    app: Application<HomeView>
 }
 
-// todo
-unsafe impl Send for RootView {}
-unsafe impl Sync for RootView {}
+#[wasm_bindgen]
+impl Client {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        let mut state = Rc::new(RefCell::new(State::new()));
+        let app = Application::new(String::from("body"), state.clone());
 
-#[derive(Copy, Clone, Debug)]
-struct RootViewProps {
-    name: &'static str,
-    color: &'static str,
-}
-
-#[derive(Copy, Clone, Debug, Primitive)]
-enum Message {
-    Add = 1
-}
-
-#[derive(Copy, Clone, Debug)]
-struct RootView {
-    name: &'static str,
-    color: &'static str,
-}
-
-impl Component for RootView {
-    type Message = Message;
-    type Props = RootViewProps;
-
-    fn new(props: Self::Props) -> Self {
-        log!("New comp");
-
-        Self { name: props.name, color: props.color }
+        Self {
+            state,
+            app
+        }
     }
 
-    fn update(mut self, event: &Event, message: Message) -> Self {
-        match message {
-            Message::Add => {
-                log!("Update! {:?}", event);
-                self.name = "Rick";
-                self.color = "blue";
+    #[wasm_bindgen]
+    pub fn update(&mut self) {
+        self.app.render();
+    }
+}
 
-                self
+struct HomeView {
+    state: RcState
+}
+
+impl Component<RcState> for HomeView {
+    fn new(state: RcState) -> HomeView {
+        Self {
+            state
+        }
+    }
+
+    fn render(&self) -> VirtualNode {
+        topo::call!({
+            // Declare a new state variable which we'll call "count"
+            let (count, count_access) = use_state(self.state.clone(), || 0);
+
+            html! {
+                <div>
+                    <strong>Hello World</strong><br/>
+                    <strong>Count: {format!{"{}", count}}</strong><br/>
+                    <button onclick=move |_event: web_sys::Event| {
+                        log!("Button Clicked!");
+                        count_access.set(count + 1);
+                    }>
+                        // No need to wrap text in quotation marks (:
+                        Click me and check your console
+                    </button>
+                </div>
             }
-        }
-    }
-}
-
-impl Renderable for RootView {
-    fn render(self) -> String {
-        log!("Updated: {}", self.name);
-
-        let style = format!("color: {}", self.color);
-
-        html! {
-            <article style={&*style} dataAttr={"test"}>
-                <header class={"title"} onclick={self.create_event(&Message::Add)}>
-                    <p>{self.name}</p>
-                </header>
-                <section class={"body"}>
-                    {"Body"}
-                </section>
-            </article>
-        }
+        })
     }
 }

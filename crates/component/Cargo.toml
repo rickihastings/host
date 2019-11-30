@@ -1,16 +1,13 @@
 [package]
 name = "host-component"
-version = "0.1.0"
+version = "0.0.2"
 authors = ["rickihastings"]
 edition = "2018"
 
 [dependencies]
 wasm-bindgen = "0.2"
-js-sys = "0.3.27"
-treexml = "0.7"
-render = "0.2.0"
-enum-primitive-derive = "^0.1"
-num-traits = "^0.1"
+virtual-dom-rs = "0.6.10"
+comp_state = "0.0.4"
 
 [dependencies.web-sys]
 version = "0.3.4"
