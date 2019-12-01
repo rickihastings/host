@@ -68,7 +68,7 @@ where
     T: 'static + Clone,
     F: FnOnce() -> T
 {
-	let current_id = topo::Id::current();
+    let current_id = topo::Id::current();
 
     // returns a clone of the curent stored type. If the type has not been stored before
     // set it with the closure passed to use_state.

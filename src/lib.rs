@@ -4,9 +4,10 @@ mod utils;
 
 use std::cell::RefCell;
 use std::rc::Rc;
+use rand::prelude::*;
 
 use wasm_bindgen::prelude::*;
-use host_component::{html, Application, Component, VirtualNode, IterableNodes, topo, use_state, State, RcState};
+use host_component::{html, Application, Component, VirtualNode, IterableNodes, use_state, State, RcState};
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
@@ -30,7 +31,7 @@ struct Client {
 impl Client {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
-        let mut state = Rc::new(RefCell::new(State::new()));
+        let state = Rc::new(RefCell::new(State::new()));
         let app = Application::new(String::from("body"), state.clone());
 
         Self {
@@ -56,24 +57,26 @@ impl Component<RcState> for HomeView {
         }
     }
 
-    fn render(&self) -> VirtualNode {
-        topo::call!({
-            // Declare a new state variable which we'll call "count"
-            let (count, count_access) = use_state(self.state.clone(), || 0);
+    fn render(&self) -> VirtualNode {   
+        // Declare a new state variable which we'll call "count"
+        let (count, count_access) = use_state(self.state.clone(), || 0);
+        
+        let mut rng = rand::thread_rng();
+        let y: f64 = rng.gen();
 
-            html! {
-                <div>
-                    <strong>Hello World</strong><br/>
-                    <strong>Count: {format!{"{}", count}}</strong><br/>
-                    <button onclick=move |_event: web_sys::Event| {
-                        log!("Button Clicked!");
-                        count_access.set(count + 1);
-                    }>
-                        // No need to wrap text in quotation marks (:
-                        Click me and check your console
-                    </button>
-                </div>
-            }
-        })
+        html! {
+            <div>
+                <strong>Hello World</strong><br/>
+                <strong>Count: {format!{"{}", count}}</strong><br/>
+                <strong>Random: {format!("{}", y)}</strong><br/>
+                <button onclick=move |_event: web_sys::Event| {
+                    log!("Button Clicked!");
+                    count_access.set(count + 1);
+                }>
+                    // No need to wrap text in quotation marks (:
+                    Click me and check your console
+                </button>
+            </div>
+        }
     }
 }

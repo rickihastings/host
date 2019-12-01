@@ -1,8 +1,20 @@
 use crate::component::Component;
 use crate::state::RcState;
 
+use wasm_bindgen;
+use wasm_bindgen::prelude::*;
 use web_sys::{window};
 use virtual_dom_rs::DomUpdater;
+
+#[wasm_bindgen]
+extern "C" {
+    pub type HostJS;
+
+    pub static __host_js: HostJS;
+
+    #[wasm_bindgen(method)]
+    pub fn update(this: &HostJS);
+}
 
 pub struct Application<T>
 where
@@ -28,10 +40,10 @@ where
 			.expect("cannot find element in document")
 			.unwrap();
 
-		let dom_updater = DomUpdater::new_append_to_mount(component.render(), &root_node);
+		let dom_updater = DomUpdater::new_append_to_mount(component.mount(), &root_node);
 		
 		cloned_state.borrow_mut().subscribe(Box::new(|| {
-			
+			__host_js.update();
         }));
 
 		Self {
@@ -41,6 +53,6 @@ where
 	}
 
 	pub fn render(&mut self) {
-		self.dom_updater.update(self.component.render());
+		self.dom_updater.update(self.component.mount());
 	}
 }
