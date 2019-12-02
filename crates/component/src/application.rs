@@ -1,5 +1,5 @@
 use crate::component::Component;
-use crate::state::RcState;
+use crate::context::Context;
 
 use wasm_bindgen;
 use wasm_bindgen::prelude::*;
@@ -18,19 +18,20 @@ extern "C" {
 
 pub struct Application<T>
 where
-	T: Component<RcState>
+	T: Component
 {
 	component: T,
+	context: Context,
 	dom_updater: DomUpdater
 }
 
 impl<T> Application<T>
 where
-	T: Component<RcState>
+	T: Component
 {
-	pub fn new(root: String, state: RcState) -> Self {
+	pub fn new(root: String, state: Context) -> Self {
 		let cloned_state = state.clone();
-		let component = T::new(state);
+		let component = T::new();
 
 		// Use `web_sys`'s global `window` function to get a handle on the global window object.
 		let window = window().unwrap();
@@ -40,19 +41,23 @@ where
 			.expect("cannot find element in document")
 			.unwrap();
 
-		let dom_updater = DomUpdater::new_append_to_mount(component.mount(), &root_node);
+		let dom_updater = DomUpdater::new_append_to_mount(component.render(cloned_state.clone()), &root_node);
+		// let saved_state = state.clone();
 		
-		cloned_state.borrow_mut().subscribe(Box::new(|| {
-			__host_js.update();
-        }));
+		// cloned_state.borrow_mut().subscribe(Box::new(|| {
+		// 	__host_js.update();
+        // }));
 
 		Self {
 			component,
+			context: cloned_state.clone(),
 			dom_updater
 		}
 	}
 
 	pub fn render(&mut self) {
-		self.dom_updater.update(self.component.mount());
+		self.dom_updater.update(
+			self.component.render(self.context.clone())
+		);
 	}
 }
