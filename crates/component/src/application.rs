@@ -1,5 +1,8 @@
 use crate::component::Component;
-use crate::context::Context;
+use crate::context::{RawContext, Context};
+
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use wasm_bindgen;
 use wasm_bindgen::prelude::*;
@@ -29,9 +32,13 @@ impl<T> Application<T>
 where
 	T: Component
 {
-	pub fn new(root: String, state: Context) -> Self {
-		let cloned_state = state.clone();
+	pub fn new(root: String) -> Self {
+		let context = Rc::new(RefCell::new(RawContext::new()));
 		let component = T::new();
+
+		context.borrow_mut().subscribe(Box::new(|| {
+			__host_js.update();
+		}));
 
 		// Use `web_sys`'s global `window` function to get a handle on the global window object.
 		let window = window().unwrap();
@@ -41,23 +48,16 @@ where
 			.expect("cannot find element in document")
 			.unwrap();
 
-		let dom_updater = DomUpdater::new_append_to_mount(component.render(cloned_state.clone()), &root_node);
-		// let saved_state = state.clone();
-		
-		// cloned_state.borrow_mut().subscribe(Box::new(|| {
-		// 	__host_js.update();
-        // }));
+		let dom_updater = DomUpdater::new_append_to_mount(component.render_to_dom(context.clone()), &root_node);
 
 		Self {
 			component,
-			context: cloned_state.clone(),
+			context: context,
 			dom_updater
 		}
 	}
 
 	pub fn render(&mut self) {
-		self.dom_updater.update(
-			self.component.render(self.context.clone())
-		);
+		self.dom_updater.update(self.component.render_to_dom(self.context.clone()));
 	}
 }

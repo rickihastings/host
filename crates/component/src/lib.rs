@@ -2,19 +2,20 @@ mod component;
 mod application;
 mod context;
 mod state;
+mod environment;
 
 // use comp_state::*;
 
 pub use crate::application::Application;
 pub use crate::component::Component;
-pub use crate::context::{Context, RawContext};
 pub use crate::state::use_state;
 
+pub use illicit;
 pub use virtual_dom_rs::html as html;
 pub use virtual_dom_rs::VirtualNode as VirtualNode;
 pub use virtual_dom_rs::IterableNodes as IterableNodes;
 
-pub use comp_state::topo as topo;
+// pub use comp_state::topo as topo;
 
 // use std::marker::PhantomData;
 
