@@ -1,5 +1,5 @@
 use crate::context::Context;
-use crate::environment::Environment;
+use crate::environment::{Id, Environment};
 
 use std::collections::HashMap;
 
@@ -7,14 +7,18 @@ use serde::Serialize;
 use serde_json::{value::Value, json};
 
 pub struct LocalState {
+	id: Id,
 	context: Context,
 	state: HashMap<String, Value>,
 }
 
 impl LocalState {
     pub fn new(context: Context) -> Self {
+		let id = Id::current();
+
         Self {
 			context,
+			id,
 			state: HashMap::new(),
         }
 	}
@@ -43,7 +47,6 @@ impl LocalState {
 	}	
 }
 
-#[illicit::from_env(environment: &Environment)]
 pub fn use_state<T, F>(key: &str, data_fn: F) -> (T, LocalState)
 where
 	T: 'static + Clone + serde::Serialize,
@@ -52,8 +55,6 @@ where
 	let data = data_fn();
 
 	Environment::run_in_environment(|env| {
-		web_sys::console::log_1(&format!("{:?}", env.id).into());
-
 		(data, LocalState::new(env.context.clone()))
 	})
 }

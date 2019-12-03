@@ -32,7 +32,7 @@ impl std::fmt::Debug for Id {
 
 #[derive(Debug)]
 pub struct Environment {
-    pub id: Id,
+    id: Id,
     pub context: Context
 }
 
@@ -80,8 +80,8 @@ impl Callsite {
 #[macro_export]
 macro_rules! callsite {
     () => {{
-        struct UwuDaddyRustcGibUniqueTypeIdPlsPls; // thanks for the great name idea, cjm00!
-        $crate::environment::Callsite::new(std::any::TypeId::of::<UwuDaddyRustcGibUniqueTypeIdPlsPls>())
+        struct TotallyRandomAndUniqueStructName;
+        $crate::environment::Callsite::new(std::any::TypeId::of::<TotallyRandomAndUniqueStructName>())
     }};
 }
 
