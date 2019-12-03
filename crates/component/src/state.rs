@@ -1,50 +1,61 @@
 use crate::context::Context;
-use crate::environment::Wrapper;
+use crate::environment::Environment;
 
-use std::marker::PhantomData;
+use std::collections::HashMap;
 
 use serde::Serialize;
 use serde_json::{value::Value, json};
 
-macro_rules! log {
-    ( $( $t:tt )* ) => {
-        web_sys::console::log_1(&format!( $( $t )* ).into());
-    }
-}
-
-pub struct LocalState<T> {
+pub struct LocalState {
 	context: Context,
-	_phantom_data: PhantomData<T>,
+	state: HashMap<String, Value>,
 }
 
-impl<T> LocalState<T>
-where
-    T: 'static + Clone + serde::Serialize
-{
+impl LocalState {
     pub fn new(context: Context) -> Self {
         Self {
 			context,
-            _phantom_data: PhantomData,
+			state: HashMap::new(),
         }
 	}
 
-	
-	pub fn set(&self, _new_value: T) {
-		log!("Test");
+	pub fn set<V>(&mut self, key: &str, new_value: V)
+	where
+		V: serde::Serialize
+	{
+		self.save_to_hash_map(key, new_value);
 
 		self.context.borrow_mut().update();
 	}
+
+	#[doc(hidden)]
+	fn save_to_hash_map<V>(&mut self, key: &str, new_value: V)
+	where
+		V: serde::Serialize
+	{
+		if let Some(current_value) = self.state.get_mut(key) {
+			// Id exists in hashmap, update the value
+			*current_value = json!(new_value);
+		} else {
+			// Id doesn't exist so we need to add it
+			self.state.insert(key.to_string(), json!(new_value));
+		}
+	}	
 }
 
-#[illicit::from_env(context: &Context)]
-pub fn use_state<T, F>(key: &str, data_fn: F) -> (T, LocalState<T>)
+#[illicit::from_env(environment: &Environment)]
+pub fn use_state<T, F>(key: &str, data_fn: F) -> (T, LocalState)
 where
 	T: 'static + Clone + serde::Serialize,
 	F: 'static + Clone + FnOnce() -> T
 {
 	let data = data_fn();
 
-	(data, LocalState::new(context.clone()))
+	Environment::run_in_environment(|env| {
+		web_sys::console::log_1(&format!("{:?}", env.id).into());
+
+		(data, LocalState::new(env.context.clone()))
+	})
 }
 
 // use crate::LocalContext;

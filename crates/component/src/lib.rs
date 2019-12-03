@@ -10,7 +10,6 @@ pub use crate::application::Application;
 pub use crate::component::Component;
 pub use crate::state::use_state;
 
-pub use illicit;
 pub use virtual_dom_rs::html as html;
 pub use virtual_dom_rs::VirtualNode as VirtualNode;
 pub use virtual_dom_rs::IterableNodes as IterableNodes;

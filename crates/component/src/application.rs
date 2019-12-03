@@ -32,7 +32,7 @@ impl<T> Application<T>
 where
 	T: Component
 {
-	pub fn new(root: String) -> Self {
+	pub fn new(root: &str) -> Self {
 		let context = Rc::new(RefCell::new(RawContext::new()));
 		let component = T::new();
 

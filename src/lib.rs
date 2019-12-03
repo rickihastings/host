@@ -6,10 +6,7 @@ use rand::prelude::*;
 
 use wasm_bindgen::prelude::*;
 // use host_component_macro::*;
-use host_component::{
-    illicit,
-    html, use_state, Application, Component, IterableNodes, VirtualNode,
-};
+use host_component::{html, use_state, Application, Component, IterableNodes, VirtualNode};
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
@@ -32,11 +29,9 @@ struct Client {
 impl Client {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
-        let app = Application::new(String::from("body"));
+        let app = Application::new("body");
 
-        Self {
-            app
-        }
+        Self { app }
     }
 
     #[wasm_bindgen]
@@ -53,7 +48,7 @@ impl Component for NewHomeView {
     }
 
     fn render(&self) -> VirtualNode {
-        let (count, set_count) = use_state("count", || 0);
+        let (count, mut set_count) = use_state("count", || 0);
 
         let mut rng = rand::thread_rng();
         let y: f64 = rng.gen();
@@ -64,9 +59,9 @@ impl Component for NewHomeView {
                 <strong>Count: {format!{"{}", count}}</strong><br/>
                 <strong>Random: {format!("{}", y)}</strong><br/>
                 <button onclick=move |_event: web_sys::Event| {
-                    set_count.set(count + 1);
+                    set_count.set("count", count + 1);
 
-                    log!("Button Clicked!"); 
+                    log!("Button Clicked!");
                 }>
                     // No need to wrap text in quotation marks (:
                     Click me and check your console

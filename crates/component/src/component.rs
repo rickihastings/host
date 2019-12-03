@@ -2,7 +2,7 @@ extern crate illicit;
 
 use crate::VirtualNode;
 use crate::context::Context;
-use crate::environment::{Wrapper};
+
 
 /// An interface for a React-style Component
 pub trait Component {
@@ -10,7 +10,7 @@ pub trait Component {
 
 	#[doc(hidden)]
 	fn render_to_dom(&self, context: Context) -> VirtualNode {
-		illicit::child_env!(Context => context).enter(|| {
+		crate::call!(context, || {
 			self.render()
 		})
 	}
