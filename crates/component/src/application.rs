@@ -21,45 +21,45 @@ extern "C" {
 
 pub struct Application<T>
 where
-	T: Component
+    T: Component
 {
-	component: T,
-	context: ApplicationContext,
-	dom_updater: DomUpdater
+    component: T,
+    context: ApplicationContext,
+    dom_updater: DomUpdater
 }
 
 impl<T> Application<T>
 where
-	T: Component
+    T: Component
 {
-	pub fn new(root: &str) -> Self {
-		let context = Rc::new(RefCell::new(ApplicationContextRaw::new()));
-		let component = T::new();
+    pub fn new(root: &str) -> Self {
+        let context = Rc::new(RefCell::new(ApplicationContextRaw::new()));
+        let component = T::new();
 
-		context.borrow_mut().subscribe(Box::new(|| {
-			__host_js.update();
-		}));
+        context.borrow_mut().subscribe(Box::new(|| {
+            __host_js.update();
+        }));
 
-		// Use `web_sys`'s global `window` function to get a handle on the global window object.
-		let window = window().unwrap();
-		let document = window.document().unwrap();
-		let root_node = document
-			.query_selector(&root)
-			.expect("cannot find element in document")
-			.unwrap();
+        // Use `web_sys`'s global `window` function to get a handle on the global window object.
+        let window = window().unwrap();
+        let document = window.document().unwrap();
+        let root_node = document
+            .query_selector(&root)
+            .expect("cannot find element in document")
+            .unwrap();
 
-		let dom_updater = DomUpdater::new_append_to_mount(component.render_to_dom(context.clone()), &root_node);
+        let dom_updater = DomUpdater::new_append_to_mount(component.render_to_dom(context.clone()), &root_node);
 
-		Self {
-			component,
-			context: context,
-			dom_updater
-		}
-	}
+        Self {
+            component,
+            context: context,
+            dom_updater
+        }
+    }
 
-	pub fn render(&mut self) {
-		self.dom_updater.update(self.component.render_to_dom(self.context.clone()));
-	}
+    pub fn render(&mut self) {
+        self.dom_updater.update(self.component.render_to_dom(self.context.clone()));
+    }
 }
 
 pub trait Subscriber: Fn() -> () { }
@@ -71,31 +71,31 @@ pub type SubscriberFn = dyn Subscriber<Output = ()>;
 
 impl fmt::Debug for SubscriberFn {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "SubscriberFn")
-	}
+        write!(f, "SubscriberFn")
+    }
 }
 
 #[derive(Debug)]
 pub struct ApplicationContextRaw {
-	listeners: Vec<Box<SubscriberFn>>
+    listeners: Vec<Box<SubscriberFn>>
 }
 
 impl ApplicationContextRaw {
     pub fn new() -> Self {
         Self {
-			listeners: vec![]
-		}
-	}
+            listeners: vec![]
+        }
+    }
 
-	pub fn subscribe(&mut self, callback: Box<SubscriberFn>) {
+    pub fn subscribe(&mut self, callback: Box<SubscriberFn>) {
         self.listeners.push(callback)
-	}
-	
-	pub fn update(&mut self) {
-		for callback in self.listeners.iter() {
+    }
+    
+    pub fn update(&mut self) {
+        for callback in self.listeners.iter() {
             callback();
         }
-	}
+    }
 }
 
 pub type ApplicationContext = Rc<RefCell<ApplicationContextRaw>>;

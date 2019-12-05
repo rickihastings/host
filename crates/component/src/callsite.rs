@@ -12,8 +12,8 @@ impl Callsite {
     #[doc(hidden)]
     pub fn new(ty: TypeId) -> Self {
         Self {
-			ty
-		}
+            ty
+        }
     }
 }
 

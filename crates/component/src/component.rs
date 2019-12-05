@@ -19,23 +19,23 @@ macro_rules! log {
 
 /// An interface for a React-style Component
 pub trait Component {
-	fn new() -> Self;
+    fn new() -> Self;
 
-	#[doc(hidden)]
-	fn render_to_dom(&self, context: ApplicationContext) -> VirtualNode {
-		crate::call_in_context!(context, || {
-			self.render()
-		})
-	}
+    #[doc(hidden)]
+    fn render_to_dom(&self, context: ApplicationContext) -> VirtualNode {
+        crate::call_in_context!(context, || {
+            self.render()
+        })
+    }
 
-	fn render(&self) -> VirtualNode;
+    fn render(&self) -> VirtualNode;
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct ContextId(u64);
 
 impl ContextId {
-	/// Returns the `Id` for the current scope in the call topology.
+    /// Returns the `Id` for the current scope in the call topology.
     pub fn current() -> Self {
         ComponentContext::run_in_environment(|env| env.id)
     }
@@ -57,14 +57,14 @@ impl fmt::Debug for ContextId {
 #[derive(Debug)]
 pub struct ComponentContext {
     pub id: ContextId,
-	pub application_context: ApplicationContext,
+    pub application_context: ApplicationContext,
 }
 
 impl ComponentContext {
     pub fn enter_environment<R>(&self, callsite: Callsite, application_context: ApplicationContext, child: impl FnOnce() -> R) -> R {
         let env = Self {
             id: self.id.generate(callsite),
-			application_context,
+            application_context,
         };
 
         illicit::child_env!(ComponentContext => env).enter(child)
@@ -76,14 +76,14 @@ impl ComponentContext {
         } else {
             child(&ComponentContext::default())
         }
-	}
+    }
 }
 
 impl Default for ComponentContext {
-	fn default() -> Self {
-		Self {
+    fn default() -> Self {
+        Self {
             id: ContextId(0),
-			application_context: Rc::new(RefCell::new(ApplicationContextRaw::new())),
+            application_context: Rc::new(RefCell::new(ApplicationContextRaw::new())),
         }
-	}
+    }
 }
