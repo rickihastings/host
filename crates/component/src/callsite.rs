@@ -29,8 +29,8 @@ macro_rules! callsite {
 macro_rules! call_in_context {
     ($context:expr, $($input:tt)*) => {{
         let callsite = $crate::callsite!();
-        $crate::component::ComponentContextRaw::run_in_environment(|current| {
-            current.borrow_mut().enter_environment(callsite, $context, $($input)*)
+        $crate::component::ComponentContext::run_in_environment(|current| {
+            current.enter_environment(callsite, $context, $($input)*)
         })
     }};
 }

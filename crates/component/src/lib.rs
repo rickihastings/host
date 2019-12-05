@@ -2,6 +2,7 @@ mod application;
 mod callsite;
 mod component;
 mod hooks;
+mod store;
 
 pub use crate::application::{Application, ApplicationContext};
 pub use crate::component::{Component, ComponentContext};

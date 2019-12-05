@@ -59,8 +59,6 @@ impl Component for NewHomeView {
                 <strong>Count: {format!{"{}", count}}</strong><br/>
                 <strong>Random: {format!("{}", y)}</strong><br/>
                 <button onclick=move |_event: web_sys::Event| {
-                    log!("Button Clicked! {}", count);
-
                     set_count.set("count", count + 1);
                 }>
                     // No need to wrap text in quotation marks (:
