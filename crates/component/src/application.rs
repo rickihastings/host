@@ -1,12 +1,12 @@
 use crate::component::Component;
-use crate::context::{RawContext, Context};
 
+use std::fmt;
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use wasm_bindgen;
 use wasm_bindgen::prelude::*;
-use web_sys::{window};
+use web_sys::window;
 use virtual_dom_rs::DomUpdater;
 
 #[wasm_bindgen]
@@ -24,7 +24,7 @@ where
 	T: Component
 {
 	component: T,
-	context: Context,
+	context: ApplicationContext,
 	dom_updater: DomUpdater
 }
 
@@ -33,7 +33,7 @@ where
 	T: Component
 {
 	pub fn new(root: &str) -> Self {
-		let context = Rc::new(RefCell::new(RawContext::new()));
+		let context = Rc::new(RefCell::new(ApplicationContextRaw::new()));
 		let component = T::new();
 
 		context.borrow_mut().subscribe(Box::new(|| {
@@ -61,3 +61,42 @@ where
 		self.dom_updater.update(self.component.render_to_dom(self.context.clone()));
 	}
 }
+
+pub trait Subscriber: Fn() -> () { }
+
+impl<F> Subscriber for F where F: Fn() -> () { }
+
+// Custom function so we can use Debug on it
+pub type SubscriberFn = dyn Subscriber<Output = ()>;
+
+impl fmt::Debug for SubscriberFn {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "SubscriberFn")
+	}
+}
+
+#[derive(Debug)]
+pub struct ApplicationContextRaw {
+	listeners: Vec<Box<SubscriberFn>>
+}
+
+impl ApplicationContextRaw {
+    pub fn new() -> Self {
+        Self {
+			listeners: vec![]
+		}
+	}
+
+	pub fn subscribe(&mut self, callback: Box<SubscriberFn>) {
+        self.listeners.push(callback)
+	}
+	
+	pub fn update(&mut self) {
+		for callback in self.listeners.iter() {
+            callback();
+        }
+	}
+}
+
+pub type ApplicationContext = Rc<RefCell<ApplicationContextRaw>>;
+
