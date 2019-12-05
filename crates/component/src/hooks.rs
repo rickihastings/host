@@ -13,8 +13,6 @@ impl LocalState {
     pub fn new() -> Self {
         let id = ContextId::current();
 
-        crate::log!("Hello from {:?}", id);
-
         Self {
             id
         }
@@ -54,7 +52,11 @@ where
     let data = data_fn();
     let mut local_state = LocalState::new();
 
+    crate::log!("Hello from {:?}", ContextId::current());
+
     if let Some(value) = local_state.get(key) {
+        // crate::log!("use_state_value: {}", value);
+
         (value, local_state)
     } else {
         local_state.set_without_update(key, data.clone());

@@ -37,7 +37,9 @@ where
     T: Clone + Copy + fmt::Display + 'static
 {
     STORE.with(|store_refcell| {
-        if let Some(id_map) = store_refcell.borrow_mut().get(&id) {
+        let store = store_refcell.borrow_mut();
+
+        if let Some(id_map) = store.get(&id) {
             match id_map.get::<String, T>(&key.to_string()) {
                 Some(value) => Some(*value),
                 None => None
