@@ -1,36 +1,45 @@
+use fnv::FnvHasher;
+
+use std::fmt;
+use std::hash::{Hash, Hasher};
 use std::any::TypeId;
 
-// Influenced by Topo
-
 /// A value unique to the source location where it is created.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct Callsite {
-    ty: TypeId,
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[doc(hidden)]
+pub struct ContextId {
+	ty: TypeId,
+	id: u64
 }
 
-impl Callsite {
+impl ContextId {
     #[doc(hidden)]
     pub fn new(ty: TypeId) -> Self {
-        Self {
-            ty
-        }
+		let mut callsite = Self {
+			ty,
+			id: 0
+		};
+		
+		let mut hasher = FnvHasher::default();
+        hasher.write_u64(0);
+        callsite.hash(&mut hasher);
+        callsite.id = hasher.finish();
+
+		callsite
+	}
+}
+
+impl fmt::Debug for ContextId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_fmt(format_args!("{:x?}", self.id))
     }
 }
 
 #[macro_export]
+#[doc(hidden)]
 macro_rules! callsite {
     () => {{
         struct TotallyRandomAndUniqueStructName;
-        $crate::callsite::Callsite::new(std::any::TypeId::of::<TotallyRandomAndUniqueStructName>())
-    }};
-}
-
-#[macro_export]
-macro_rules! call_in_context {
-    ($context:expr, $($input:tt)*) => {{
-        let callsite = $crate::callsite!();
-        $crate::component::ComponentContext::run_in_environment(|current| {
-            current.enter_environment(callsite, $context, $($input)*)
-        })
+        $crate::callsite::ContextId::new(std::any::TypeId::of::<TotallyRandomAndUniqueStructName>())
     }};
 }

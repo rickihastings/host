@@ -1,18 +1,17 @@
-use crate::component::{ContextId, ComponentContext};
 use crate::store::{insert_into_state, get_from_state};
+use crate::application::{CONTEXT_CONTAINER, ApplicationContext};
+use crate::callsite::ContextId;
+use crate::component::Component;
 
 use std::fmt;
-
-use illicit;
+use std::sync::Mutex;
 
 pub struct LocalState {
     id: ContextId,
 }
 
 impl LocalState {
-    pub fn new() -> Self {
-        let id = ContextId::current();
-
+    pub fn new(id: ContextId) -> Self {
         Self {
             id
         }
@@ -31,9 +30,10 @@ impl LocalState {
     {
         self.set_without_update(key, new_value);
 
-        ComponentContext::run_in_environment(|env| {
-            env.application_context.borrow_mut().update();
-        });
+        let application_context = CONTEXT_CONTAINER.get::<Mutex<ApplicationContext>>();
+        if let Some(mut context) = application_context.lock().ok() {
+            context.update();
+        }
     }
 
     pub fn get<T>(&mut self, key: &str) -> Option<T>
@@ -44,19 +44,16 @@ impl LocalState {
     }
 }
 
-pub fn use_state<F, T>(key: &str, data_fn: F) -> (T, LocalState)
+pub fn use_state<C, F, T>(component: &C, key: &str, data_fn: F) -> (T, LocalState)
 where
+    C: Component,
     T: Clone + Copy + fmt::Display + fmt::Debug + 'static,
     F: Clone + FnOnce() -> T + 'static
 {
     let data = data_fn();
-    let mut local_state = LocalState::new();
-
-    crate::log!("Hello from {:?}", ContextId::current());
+    let mut local_state = LocalState::new(component.get_component_id());
 
     if let Some(value) = local_state.get(key) {
-        // crate::log!("use_state_value: {}", value);
-
         (value, local_state)
     } else {
         local_state.set_without_update(key, data.clone());

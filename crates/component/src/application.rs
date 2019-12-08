@@ -1,13 +1,14 @@
 use crate::component::Component;
 
-use std::fmt;
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::Mutex;
 
 use wasm_bindgen;
 use wasm_bindgen::prelude::*;
 use web_sys::window;
 use virtual_dom_rs::DomUpdater;
+use state::Container;
+
+pub static CONTEXT_CONTAINER: Container = Container::new();
 
 #[wasm_bindgen]
 extern "C" {
@@ -24,7 +25,6 @@ where
     T: Component
 {
     component: T,
-    context: ApplicationContext,
     dom_updater: DomUpdater
 }
 
@@ -33,12 +33,13 @@ where
     T: Component
 {
     pub fn new(root: &str) -> Self {
-        let context = Rc::new(RefCell::new(ApplicationContextRaw::new()));
-        let component = T::new();
-
-        context.borrow_mut().subscribe(Box::new(|| {
+        let application_context = Mutex::new(ApplicationContext::new(Box::new(|| {
             __host_js.update();
-        }));
+        })));
+
+        CONTEXT_CONTAINER.set(application_context);
+
+        let component = T::new();
 
         // Use `web_sys`'s global `window` function to get a handle on the global window object.
         let window = window().unwrap();
@@ -48,47 +49,28 @@ where
             .expect("cannot find element in document")
             .unwrap();
 
-        let dom_updater = DomUpdater::new_append_to_mount(component.render_to_dom(context.clone()), &root_node);
+        let dom_updater = DomUpdater::new_append_to_mount(component.render(), &root_node);
 
         Self {
             component,
-            context: context,
             dom_updater
         }
     }
 
     pub fn render(&mut self) {
-        self.dom_updater.update(self.component.render_to_dom(self.context.clone()));
+        self.dom_updater.update(self.component.render());
     }
 }
 
-pub trait Subscriber: Fn() -> () { }
-
-impl<F> Subscriber for F where F: Fn() -> () { }
-
-// Custom function so we can use Debug on it
-pub type SubscriberFn = dyn Subscriber<Output = ()>;
-
-impl fmt::Debug for SubscriberFn {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SubscriberFn")
-    }
+pub struct ApplicationContext {
+    listeners: Vec<Box<Fn() + Send + Sync>>,
 }
 
-#[derive(Debug)]
-pub struct ApplicationContextRaw {
-    listeners: Vec<Box<SubscriberFn>>
-}
-
-impl ApplicationContextRaw {
-    pub fn new() -> Self {
+impl ApplicationContext {
+    pub fn new(on_render: Box<Fn() + Send + Sync>) -> Self {
         Self {
-            listeners: vec![]
+            listeners: vec![on_render]
         }
-    }
-
-    pub fn subscribe(&mut self, callback: Box<SubscriberFn>) {
-        self.listeners.push(callback)
     }
     
     pub fn update(&mut self) {
@@ -97,6 +79,4 @@ impl ApplicationContextRaw {
         }
     }
 }
-
-pub type ApplicationContext = Rc<RefCell<ApplicationContextRaw>>;
 

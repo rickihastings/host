@@ -48,17 +48,19 @@ impl Component for NewHomeView {
     }
 
     fn render(&self) -> VirtualNode {
-        let (count, mut set_count) = use_state("count", || 0);
+        let (count, mut set_count) = use_state(self, "count", || 0);
 
         let mut rng = rand::thread_rng();
         let y: f64 = rng.gen();
+
+        log!("first: {}", count);
 
         html! {
             <div>
                 <strong>Hello World</strong><br/>
                 <strong>Count: {format!{"{}", count}}</strong><br/>
                 <strong>Random: {format!("{}", y)}</strong><br/>
-                <button onclick=move |_event: web_sys::Event| {
+                <button key={count} onclick=move |_event: web_sys::Event| {
                     set_count.set("count", count + 1);
                 }>
                     // No need to wrap text in quotation marks (:

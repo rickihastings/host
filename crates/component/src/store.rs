@@ -1,4 +1,4 @@
-use crate::component::ContextId;
+use crate::callsite::ContextId;
 
 use std::fmt;
 use std::cell::RefCell;
@@ -6,6 +6,7 @@ use std::collections::HashMap;
 
 use polymap::PolyMap;
 
+// todo replace with state
 thread_local! {
     static STORE: RefCell<Store> = RefCell::new(Store::new());
 }

@@ -1,4 +1,5 @@
 #![feature(associated_type_defaults)]
+#![feature(const_fn)]
 
 mod application;
 mod callsite;
@@ -7,7 +8,7 @@ mod hooks;
 mod store;
 
 pub use crate::application::{Application, ApplicationContext};
-pub use crate::component::{ContextId, Component, ComponentContext};
+pub use crate::component::Component;
 pub use crate::hooks::use_state;
 
 pub use virtual_dom_rs::html as html;
