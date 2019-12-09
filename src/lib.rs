@@ -4,9 +4,8 @@ mod utils;
 
 use rand::prelude::*;
 
+use host_component::*;
 use wasm_bindgen::prelude::*;
-// use host_component_macro::*;
-use host_component::{html, use_state, Application, Component, IterableNodes, VirtualNode};
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
@@ -22,14 +21,15 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 struct Client {
-    app: Application<NewHomeView>,
+    app: Application,
 }
 
 #[wasm_bindgen]
 impl Client {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
-        let app = Application::new("body");
+        let component = Box::new(NewHomeView::new());
+        let app = Application::new("body", component);
 
         Self { app }
     }
@@ -40,32 +40,73 @@ impl Client {
     }
 }
 
-struct NewHomeView;
+#[derive(Copy, Clone)]
+struct NewHomeView {
+    count: u8,
+}
 
-impl Component for NewHomeView {
+impl NewHomeView {
     fn new() -> Self {
-        Self {}
+        Self {
+            count: 0
+        }
     }
 
-    fn render(&self) -> VirtualNode {
-        let (count, mut set_count) = use_state(self, "count", || 0);
+    fn update(&mut self) {
+        self.count += 1;
+    }
+}
 
+impl Component for NewHomeView {
+    fn render(&self) -> VirtualNode {
         let mut rng = rand::thread_rng();
         let y: f64 = rng.gen();
 
-        log!("first: {}", count);
+        log!("first: {}", self.count);
+
+        let children = if self.count == 5 {
+            component! {
+                ChildView {}
+            }
+        } else {
+            html! {
+                <div>huh</div>
+            }
+        };
 
         html! {
             <div>
                 <strong>Hello World</strong><br/>
-                <strong>Count: {format!{"{}", count}}</strong><br/>
+                <strong>Count: {format!{"{}", self.count}}</strong><br/>
                 <strong>Random: {format!("{}", y)}</strong><br/>
-                <button key={count} onclick=move |_event: web_sys::Event| {
-                    set_count.set("count", count + 1);
+                <button key={self.count} onclick=move |_event: web_sys::Event| {
+                    get_component_mut::<NewHomeView, Fn(&mut NewHomeView) -> ()>(self.id(), |comp| {
+                        comp.update();
+                    });
                 }>
                     // No need to wrap text in quotation marks (:
                     Click me and check your console
                 </button>
+                {children}
+            </div>
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+struct ChildView;
+
+impl ChildView {
+    fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Component for ChildView {
+    fn render(&self) -> VirtualNode {
+        html! {
+            <div>
+                I am the child view
             </div>
         }
     }
