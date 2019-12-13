@@ -2,10 +2,10 @@
 
 mod utils;
 
-use rand::prelude::*;
-
-use host_component::*;
+use host_component::prelude::*;
 use wasm_bindgen::prelude::*;
+
+use std::rc::Rc;
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
@@ -20,94 +20,122 @@ macro_rules! log {
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
-struct Client {
+pub struct Client {
+    #[allow(dead_code)]
     app: Application,
 }
 
 #[wasm_bindgen]
 impl Client {
+    #[allow(dead_code)]
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
+        utils::set_panic_hook();
+
+        let store = DefaultReducer::new(DefaultState { count: 0 });
+
         let component = Box::new(NewHomeView::new());
-        let app = Application::new("body", component);
+        let mut app = Application::new("body", component);
+
+        app.inject_store::<DefaultReducer, Action, DefaultState>(store);
+
+        app.mount();
 
         Self { app }
     }
 
+    #[allow(dead_code)]
     #[wasm_bindgen]
     pub fn update(&mut self) {
         self.app.render();
     }
 }
 
+// Reducer
+
 #[derive(Copy, Clone)]
-struct NewHomeView {
+pub enum Action {
+    IncCount,
+}
+
+#[derive(Copy, Clone)]
+struct DefaultState {
     count: u8,
 }
 
-impl NewHomeView {
-    fn new() -> Self {
-        Self {
-            count: 0
-        }
+#[derive(Copy, Clone)]
+struct DefaultReducer {
+    state: DefaultState,
+}
+
+impl Reducer<Action, DefaultState> for DefaultReducer {
+    fn new(state: DefaultState) -> Self {
+        Self { state }
     }
 
-    fn update(&mut self) {
-        self.count += 1;
+    fn get_state(&self) -> DefaultState {
+        self.state
+    }
+
+    fn reducer(&mut self, action: Action) {
+        match action {
+            Action::IncCount => self.state.count += 1,
+        };
+    }
+}
+
+// Component
+
+#[derive(Copy, Clone)]
+struct NewHomeView;
+
+impl NewHomeView {
+    fn new() -> Self {
+        Self
+    }
+
+    fn selector(&mut self, ctx: &ApplicationCtx) -> DefaultState {
+        ctx.get_state::<DefaultReducer, Action, DefaultState>().unwrap_or(DefaultState { count: 0 })
     }
 }
 
 impl Component for NewHomeView {
-    fn render(&self) -> VirtualNode {
-        let mut rng = rand::thread_rng();
-        let y: f64 = rng.gen();
-
-        log!("first: {}", self.count);
-
-        let children = if self.count == 5 {
-            component! {
-                ChildView {}
-            }
-        } else {
-            html! {
-                <div>huh</div>
-            }
-        };
+    fn render(&mut self, ctx: ApplicationCtx) -> VirtualNode {
+        let state = self.selector(&ctx);
 
         html! {
             <div>
                 <strong>Hello World</strong><br/>
-                <strong>Count: {format!{"{}", self.count}}</strong><br/>
-                <strong>Random: {format!("{}", y)}</strong><br/>
-                <button key={self.count} onclick=move |_event: web_sys::Event| {
-                    get_component_mut::<NewHomeView, Fn(&mut NewHomeView) -> ()>(self.id(), |comp| {
-                        comp.update();
-                    });
+                <strong>Count: {format!{"{}", state.count}}</strong><br/>
+                <button key={state.count} onclick=move |_event: web_sys::Event| {
+                    ctx.dispatch::<DefaultReducer, Action, DefaultState>(Action::IncCount);
+                    ctx.update();
                 }>
-                    // No need to wrap text in quotation marks (:
-                    Click me and check your console
+                    // No need to wrap text in quotation marks
+                    Click me
                 </button>
-                {children}
             </div>
         }
     }
 }
 
-#[derive(Copy, Clone)]
-struct ChildView;
+// Child Component
 
-impl ChildView {
-    fn new() -> Self {
-        Self {}
-    }
-}
+// #[derive(Copy, Clone)]
+// struct ChildView;
 
-impl Component for ChildView {
-    fn render(&self) -> VirtualNode {
-        html! {
-            <div>
-                I am the child view
-            </div>
-        }
-    }
-}
+// impl ChildView {
+//     fn new() -> Self {
+//         Self {}
+//     }
+// }
+
+// impl Component for ChildView {
+//     fn render(&mut self) -> VirtualNode {
+//         html! {
+//             <div>
+//                 I am the child view
+//             </div>
+//         }
+//     }
+// }
