@@ -8,7 +8,6 @@ use virtual_dom_rs::DomUpdater;
 
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
 
 type MutableReducerTree = Rc<RefCell<ReducerTree>>;
 
@@ -76,7 +75,7 @@ impl Application {
                 .unwrap();
 
             let dom_updater = DomUpdater::new_append_to_mount(
-                component_context.component.prepare_render(Rc::clone(&self.context)),
+                component_context.component.render(Rc::clone(&self.context)),
                 &root_node
             );
 
@@ -90,7 +89,7 @@ impl Application {
         if let Some(dom_updater) = self.dom_updater.as_mut() {
             if let Some(component_context) = self.component_tree.get_first_component() {
                 dom_updater.update(
-                    component_context.component.prepare_render(Rc::clone(&self.context))
+                    component_context.component.render(Rc::clone(&self.context))
                 );
             }
         }
@@ -110,10 +109,6 @@ impl ApplicationContext {
         }
     }
 
-    // pub fn increment_render_count(&mut self) {
-    //     self.render_count += 1;
-    // }
-
     pub fn insert_listener(&mut self, on_render: Box<dyn Fn() + Send + Sync>) {
         self.listeners.push(on_render);
     }
@@ -127,6 +122,8 @@ impl ApplicationContext {
         self.reducer_tree
             .borrow_mut()
             .dispatch::<R, A, S>(action);
+
+        self.update();
     }
 
     pub fn get_state<R, A, S>(&self) -> Option<S>
@@ -144,16 +141,6 @@ impl ApplicationContext {
         for callback in self.listeners.iter() {
             callback();
         }
-    }
-
-    // pub fn get_render_count(&self) -> u8 {
-    //     self.render_count
-    // }
-}
-
-impl fmt::Debug for ApplicationContext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_fmt(format_args!("ApplicationContext"))
     }
 }
 

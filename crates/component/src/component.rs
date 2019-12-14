@@ -12,33 +12,13 @@ macro_rules! log {
     }
 }
 
-#[macro_export]
-macro_rules! component {
-    ( $c:ident { $($opt:expr),* } ) => {
-        let mut __component = $c::new($($opt)*);
-        let __boxed_component = Box::new(__component);
-        let __component_context = $crate::ComponentContext::new(__boxed_component.id(), 0, __boxed_component);
-
-        $crate::with_comp_tree_mut(|context| {
-            context.insert(__component_context);
-        });
-
-        __component.prepare_render()
-    }
-}
-
 /// An interface for a React-style Component
 pub trait Component: Send + Sync {
     fn id(&self) -> ContextId {
         crate::callsite!()
     }
 
-    #[doc(hidden)]
-    fn prepare_render(&mut self, ctx: Rc<ApplicationContext>) -> VirtualNode {
-        self.render(ctx)
-    }
-
-    fn render(&mut self, ctx: Rc<ApplicationContext>) -> VirtualNode;
+    fn render(&self, ctx: Rc<ApplicationContext>) -> VirtualNode;
 }
 
 pub struct ComponentContext {
