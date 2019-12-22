@@ -6,6 +6,7 @@ use wasm_bindgen::prelude::*;
 use web_sys::window;
 use virtual_dom_rs::DomUpdater;
 
+use std::fmt;
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -75,7 +76,7 @@ impl Application {
                 .unwrap();
 
             let dom_updater = DomUpdater::new_append_to_mount(
-                component_context.component.render(Rc::clone(&self.context)),
+                component_context.component.prepare_render(Rc::clone(&self.context)),
                 &root_node
             );
 
@@ -84,20 +85,30 @@ impl Application {
     }
 
     pub fn render(&mut self) {
-        // self.context.increment_render_count();
-
         if let Some(dom_updater) = self.dom_updater.as_mut() {
             if let Some(component_context) = self.component_tree.get_first_component() {
                 dom_updater.update(
-                    component_context.component.render(Rc::clone(&self.context))
+                    component_context.component.prepare_render(Rc::clone(&self.context))
                 );
             }
         }
     }
 }
 
+pub trait Listener: Fn() -> () { }
+impl<F> Listener for F where F: Fn() -> () { }
+
+type BoxedListener = Box<dyn Listener + Send + Sync>;
+
+impl fmt::Debug for BoxedListener {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_fmt(format_args!("BoxedListener"))
+    }
+}
+
+#[derive(Debug)]
 pub struct ApplicationContext {
-    listeners: Vec<Box<dyn Fn() + Send + Sync>>,
+    listeners: Vec<BoxedListener>,
     reducer_tree: MutableReducerTree,
 }
 
@@ -109,7 +120,7 @@ impl ApplicationContext {
         }
     }
 
-    pub fn insert_listener(&mut self, on_render: Box<dyn Fn() + Send + Sync>) {
+    pub fn insert_listener(&mut self, on_render: BoxedListener) {
         self.listeners.push(on_render);
     }
 

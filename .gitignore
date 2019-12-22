@@ -1,7 +1,8 @@
 /target
 **/*.rs.bk
 /crates/**/target
-Cargo.lock
-bin/
-pkg/
-wasm-pack.log
+/examples/*/pkg
+/examples/*/target
+/examples/*/wasm-pack.log
+/examples/*/dist
+/examples/*/www/node_modules

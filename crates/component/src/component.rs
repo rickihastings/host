@@ -5,20 +5,19 @@ use crate::application::ApplicationContext;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-#[macro_export]
-macro_rules! log {
-    ( $( $t:tt )* ) => {
-        web_sys::console::log_1(&format!( $( $t )* ).into());
-    }
-}
-
 /// An interface for a React-style Component
-pub trait Component: Send + Sync {
+pub trait Component {
     fn id(&self) -> ContextId {
         crate::callsite!()
     }
 
-    fn render(&self, ctx: Rc<ApplicationContext>) -> VirtualNode;
+    fn prepare_render(&self, context: Rc<ApplicationContext>) -> VirtualNode {
+        illicit::child_env!(Rc<ApplicationContext> => context).enter(|| {
+            self.render()
+        })
+    }
+
+    fn render(&self) -> VirtualNode;
 }
 
 pub struct ComponentContext {

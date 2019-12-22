@@ -5,7 +5,13 @@ mod application;
 mod component;
 mod callsite;
 mod reducer;
-mod macros;
+
+#[macro_export]
+macro_rules! log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
 
 pub mod prelude {
 	use std::rc::Rc;
@@ -13,12 +19,12 @@ pub mod prelude {
 	pub type ApplicationCtx = Rc<crate::application::ApplicationContext>;
 
 	pub use crate::application::Application;
-	pub use crate::component::Component;
+	pub use crate::component::{Component, ComponentContext};
 	pub use crate::reducer::Reducer;
-
-	pub use crate::html_component;
 
 	pub use virtual_dom_rs::html as html;
 	pub use virtual_dom_rs::VirtualNode as VirtualNode;
 	pub use virtual_dom_rs::IterableNodes as IterableNodes;
+
+	pub use illicit;
 }

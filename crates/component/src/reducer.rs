@@ -11,6 +11,7 @@ pub trait Reducer<A, S> {
 	fn reducer(&mut self, action: A);
 }
 
+#[derive(Debug)]
 pub struct ReducerTree {
     reducers: TypeMap,
 }
